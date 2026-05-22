@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiUser, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiShield } from 'react-icons/fi';
-import { HiOutlineSparkles } from 'react-icons/hi';
+
 
 const AdminLoginPage = () => {
   const [form, setForm] = useState({ username: '', password: '' });
@@ -46,9 +46,13 @@ const AdminLoginPage = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
-              <HiOutlineSparkles className="text-white" />
-            </div>
+            <div className="relative">
+  <img
+    src="/logo.png"
+    alt="FusionHub Logo"
+    className="w-9 h-9 object-contain rounded-2xl group-hover:scale-110 transition-all duration-500"
+  />
+</div>
             <span className="font-display font-bold text-xl text-white">Fusion<span className="text-gradient-orange">Hub</span></span>
           </Link>
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-600 border border-white/10 flex items-center justify-center mx-auto mb-4 shadow-2xl">

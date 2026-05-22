@@ -59,9 +59,13 @@ const RegisterPage = () => {
         <div className="absolute top-1/3 left-1/3 w-64 h-64 bg-orange-500/20 rounded-full blur-3xl" />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
-              <HiOutlineSparkles className="text-white" />
-            </div>
+            <div className="relative">
+  <img
+    src="/logo.png"
+    alt="FusionHub Logo"
+    className="w-9 h-9 object-contain rounded-2xl group-hover:scale-110 transition-all duration-500"
+  />
+</div>
             <span className="font-display font-bold text-xl text-white">Fusion<span className="text-gradient-orange">Hub</span></span>
           </Link>
           <div>

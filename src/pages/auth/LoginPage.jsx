@@ -49,14 +49,18 @@ const LoginPage = () => {
         <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-red-500/15 rounded-full blur-3xl" />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
-              <HiOutlineSparkles className="text-white" />
-            </div>
+            <div className="relative">
+  <img
+    src="/logo.png"
+    alt="FusionHub Logo"
+    className="w-9 h-9 object-contain rounded-2xl group-hover:scale-110 transition-all duration-500"
+  />
+</div>
             <span className="font-display font-bold text-xl text-white">Fusion<span className="text-gradient-orange">Hub</span></span>
           </Link>
           <div>
             <h2 className="font-display font-bold text-5xl text-white mb-4 leading-tight">Welcome<br />Back 👋</h2>
-            <p className="text-white/40 text-lg mb-8">Sign in to access food delivery, dine-out reservations, and event bookings.</p>
+            <p className="text-white/40 text-lg mb-8">Sign in to access food delivery, dine-out reservations and event bookings.</p>
             <div className="space-y-3">
               {['10,000+ restaurants on one platform', 'Exclusive deals and discounts', 'Real-time order tracking'].map(f => (
                 <div key={f} className="flex items-center gap-3 text-white/50 text-sm">
@@ -68,7 +72,7 @@ const LoginPage = () => {
               ))}
             </div>
           </div>
-          <p className="text-white/20 text-xs">© 2025 FusionHub. Infotact Technical Internship.</p>
+          <p className="text-white/20 text-xs">© 2026 FusionHub. Crafted for seamless food & event experiences.</p>
         </div>
       </div>
 

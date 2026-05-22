@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FiShoppingCart, FiMenu, FiX } from 'react-icons/fi';
-import { HiOutlineSparkles } from 'react-icons/hi';
 import { useCart } from '../../context/CartContext';
 
 const Navbar = () => {
@@ -29,9 +28,13 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <HiOutlineSparkles className="text-white text-sm" />
-            </div>
+            <div className="relative">
+  <img
+    src="/logo.png"
+    alt="FusionHub Logo"
+    className="w-12 h-12 object-contain rounded-2xl group-hover:scale-110 transition-all duration-500"
+  />
+</div>
             <span className="font-display font-bold text-xl tracking-tight">
               <span className="text-white">Fusion</span><span className="text-gradient-orange">Hub</span>
             </span>
