@@ -99,14 +99,63 @@ const HomePage = () => {
           >
             <div className="flex items-center glass rounded-2xl p-2 border border-white/10 focus-within:border-orange-500/50 transition-all duration-300">
 
-              {/* Location */}
-              <div className="flex items-center gap-2 px-3 text-white/30 border-r border-white/10 mr-2 flex-shrink-0">
-                <FiMapPin className="text-orange-400" />
+              {/* Location Dropdown */}
+<div className="flex items-center gap-2 px-3 border-r border-white/10 mr-2 flex-shrink-0">
+  <FiMapPin className="text-orange-400" />
 
-                <span className="text-sm hidden sm:block">
-                  Bengaluru
-                </span>
-              </div>
+  <select
+    className="bg-transparent text-white/70 text-sm outline-none cursor-pointer"
+    defaultValue="Bengaluru"
+  >
+    <option className="text-black">Agra</option>
+    <option className="text-black">Ahmedabad</option>
+    <option className="text-black">Ajmer</option>
+    <option className="text-black">Amritsar</option>
+    <option className="text-black">Bengaluru</option>
+    <option className="text-black">Bhopal</option>
+    <option className="text-black">Bhubaneswar</option>
+    <option className="text-black">Chandigarh</option>
+    <option className="text-black">Chennai</option>
+    <option className="text-black">Coimbatore</option>
+    <option className="text-black">Delhi</option>
+    <option className="text-black">Faridabad</option>
+    <option className="text-black">Ghaziabad</option>
+    <option className="text-black">Goa</option>
+    <option className="text-black">Gurgaon</option>
+    <option className="text-black">Guwahati</option>
+    <option className="text-black">Hyderabad</option>
+    <option className="text-black">Indore</option>
+    <option className="text-black">Jaipur</option>
+    <option className="text-black">Jammu</option>
+    <option className="text-black">Jodhpur</option>
+    <option className="text-black">Kanpur</option>
+    <option className="text-black">Kochi</option>
+    <option className="text-black">Kolkata</option>
+    <option className="text-black">Lucknow</option>
+    <option className="text-black">Ludhiana</option>
+    <option className="text-black">Madurai</option>
+    <option className="text-black">Meerut</option>
+    <option className="text-black">Mohali</option>
+    <option className="text-black">Mumbai</option>
+    <option className="text-black">Mysore</option>
+    <option className="text-black">Nagpur</option>
+    <option className="text-black">Nashik</option>
+    <option className="text-black">Noida</option>
+    <option className="text-black">Patna</option>
+    <option className="text-black">Pune</option>
+    <option className="text-black">Raipur</option>
+    <option className="text-black">Rajkot</option>
+    <option className="text-black">Ranchi</option>
+    <option className="text-black">Shimla</option>
+    <option className="text-black">Surat</option>
+    <option className="text-black">Thane</option>
+    <option className="text-black">Udaipur</option>
+    <option className="text-black">Vadodara</option>
+    <option className="text-black">Varanasi</option>
+    <option className="text-black">Vijayawada</option>
+    <option className="text-black">Visakhapatnam</option>
+  </select>
+</div>
 
               {/* Input */}
               <input
