@@ -102,13 +102,38 @@ const FoodPage = () => {
               )}
             </div>
             <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="glass border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none bg-[#1A1A1A] cursor-pointer"
-            >
-              <option value="rating">Sort: Top Rated</option>
-              <option value="time">Sort: Fastest Delivery</option>
-            </select>
+  value={sortBy}
+  onChange={e => setSortBy(e.target.value)}
+  className="glass border border-orange-500/30 rounded-xl px-4 py-2.5 text-white text-sm outline-none bg-[#1A1A1A] cursor-pointer min-w-[220px]"
+>
+  <option value="rating" className="bg-[#1A1A1A] text-white">
+    Sort: Top Rated
+  </option>
+
+  <option value="time" className="bg-[#1A1A1A] text-white">
+    Fastest Delivery
+  </option>
+
+  <option value="low-price" className="bg-[#1A1A1A] text-white">
+    Price: Low to High
+  </option>
+
+  <option value="high-price" className="bg-[#1A1A1A] text-white">
+    Price: High to Low
+  </option>
+
+  <option value="offers" className="bg-[#1A1A1A] text-white">
+    Best Offers
+  </option>
+
+  <option value="popular" className="bg-[#1A1A1A] text-white">
+    Most Popular
+  </option>
+
+  <option value="newest" className="bg-[#1A1A1A] text-white">
+    Newly Added
+  </option>
+</select>
           </div>
         </div>
       </div>
