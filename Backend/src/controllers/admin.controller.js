@@ -33,7 +33,7 @@ export const getDashboardStats = async (req, res, next) => {
 };
 
 
-// All 
+// All users
 export const getAllUsers = async (req, res, next) => {
   try {
     const users = await User.find();
