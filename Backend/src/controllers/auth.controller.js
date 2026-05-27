@@ -1,18 +1,16 @@
 import User from "../models/User.js";
-import generateToken from "../utils/generateToken.js";
+import jwt from "jsonwebtoken";
 
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
+  });
+};
 
-// Register
-export const registerUser = async (req, res, next) => {
+// REGISTER USER
+export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, phone, role } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Name, email and password are required",
-      });
-    }
+    const { name, email, password, phone } = req.body;
 
     const existingUser = await User.findOne({ email });
 
@@ -23,88 +21,99 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
+    // Password auto-hashes from User model
     const user = await User.create({
       name,
       email,
       password,
       phone,
-      role,
     });
-
-    const token = generateToken(user);
 
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      token,
+      token: generateToken(user._id),
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
         phone: user.phone,
       },
     });
-
   } catch (error) {
-    next(error);
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };
 
-
-// Login
-export const loginUser = async (req, res, next) => {
+// LOGIN USER
+export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password required",
-      });
-    }
-
+    // IMPORTANT: select password manually
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-      return res.status(401).json({
+      return res.status(400).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Invalid email or password",
       });
     }
 
     const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
-      return res.status(401).json({
+      return res.status(400).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Invalid email or password",
       });
     }
 
-    const token = generateToken(user);
-
     res.status(200).json({
       success: true,
-      message: "Login successful",
-      token,
+      token: generateToken(user._id),
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
         phone: user.phone,
       },
     });
-
   } catch (error) {
-    next(error);
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };
 
+// GET PROFILE
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
 
-// Get Profile
-export const getProfile = async (req, res, next) => {
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// UPDATE PROFILE
+export const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
@@ -115,44 +124,21 @@ export const getProfile = async (req, res, next) => {
       });
     }
 
-    res.status(200).json({
-      success: true,
-      user,
-    });
+    user.name = req.body.name || user.name;
+    user.phone = req.body.phone || user.phone;
 
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-// Update Profile
-export const updateProfile = async (req, res, next) => {
-  try {
-    const { name, phone, avatar } = req.body;
-
-    const user = await User.findById(req.user.id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    user.name = name || user.name;
-    user.phone = phone || user.phone;
-    user.avatar = avatar || user.avatar;
-
-    await user.save();
+    const updatedUser = await user.save();
 
     res.status(200).json({
       success: true,
-      message: "Profile updated successfully",
-      user,
+      user: updatedUser,
     });
-
   } catch (error) {
-    next(error);
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };
