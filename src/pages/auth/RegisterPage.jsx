@@ -83,7 +83,7 @@ const RegisterPage = () => {
         </div>
       </div>
 
-      {/*  */}
+      {/* Right Panel */}
       <div className="flex-1 flex items-start justify-center p-6 bg-[#0D0D0D] overflow-y-auto py-12">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-2 mb-6">
