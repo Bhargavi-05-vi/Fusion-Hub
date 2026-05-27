@@ -88,13 +88,13 @@ const Footer = () => (
           },
 
           {
-            title: 'Support',
-            links: [
-              ['Help Center', '#'],
-              ['Contact Us', '#'],
-              ['Privacy Policy', '#']
-            ]
-          }
+  title: 'Support',
+  links: [
+    ['Help Center', '/help'],
+    ['Contact Us', '/contact'],
+    ['Privacy Policy', '/privacy']
+  ]
+}
 
         ].map((col) => (
 

@@ -16,6 +16,10 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import AdminLoginPage from './pages/auth/AdminLoginPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import HelpCenterPage from './pages/support/HelpCenterPage';
+import ContactPage from './pages/support/ContactPage';
+import PrivacyPolicyPage from './pages/support/PrivacyPolicyPage';
+
 
 const authRoutes = ['/login', '/register', '/admin-login', '/forgot-password'];
 
@@ -40,6 +44,9 @@ const AppLayout = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin-login" element={<AdminLoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/help"    element={<HelpCenterPage />} />
+<Route path="/contact" element={<ContactPage />} />
+<Route path="/privacy" element={<PrivacyPolicyPage />} />
       </Routes>
       {!isAuth && <Footer />}
     </>
