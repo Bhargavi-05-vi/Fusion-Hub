@@ -15,24 +15,32 @@ import errorHandler from "./middleware/error.middleware.js";
 
 const app = express();
 
+// ── CORS ───────────────────────────────────────────────
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.use(express.json());
+// ── Body Parser ────────────────────────────────────────
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// ── Health Check ───────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "FusionHub Backend Running",
+    message: "🚀 FusionHub Backend Running",
+    version: "1.0.0",
+    timestamp: new Date().toISOString(),
   });
 });
 
+// ── API Routes ─────────────────────────────────────────
 app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/menu", menuRoutes);
@@ -42,6 +50,15 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/delivery", deliveryRoutes);
 app.use("/api/admin", adminRoutes);
 
+// ── 404 Handler ────────────────────────────────────────
+app.use("*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`,
+  });
+});
+
+// ── Global Error Handler ───────────────────────────────
 app.use(errorHandler);
 
 export default app;
