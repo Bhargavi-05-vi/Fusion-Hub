@@ -1,5 +1,5 @@
 // Role-based access control middleware
-// "user" aur "customer" ko same maanta hai
+// "user" aur "customer" ko same maanta 
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
