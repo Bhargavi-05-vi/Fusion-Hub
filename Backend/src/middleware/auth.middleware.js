@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-// Protected routes ke liye middleware
+// Protected routes ke liye 
 // JWT verify karta hai aur DB se fresh user data laata hai
 const protect = async (req, res, next) => {
   try {
