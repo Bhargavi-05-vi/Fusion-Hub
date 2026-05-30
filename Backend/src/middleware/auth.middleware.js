@@ -41,7 +41,7 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // req.user mein full user object attach 
+    // req.user mein full user object attach karo
     req.user = user;
     next();
   } catch (error) {
