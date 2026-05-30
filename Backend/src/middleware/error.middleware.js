@@ -1,7 +1,7 @@
 const errorHandler = (err, req, res, next) => {
   console.error("Error:", err.stack);
 
-  // Mongoose validation 
+  // Mongoose validation error
   if (err.name === "ValidationError") {
     const errors = Object.values(err.errors).map((e) => ({
       field: e.path,
