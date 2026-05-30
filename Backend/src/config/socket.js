@@ -30,4 +30,4 @@ export const getIO = () => {
     throw new Error("Socket not initialized");
   }
   return io;
-}
+};
