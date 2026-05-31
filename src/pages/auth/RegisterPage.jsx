@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import { HiOutlineSparkles } from 'react-icons/hi';
+import API from '../../services/api';
 
 const RegisterPage = () => {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
@@ -33,15 +34,38 @@ const RegisterPage = () => {
     return errs;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const errs = validate();
-    setErrors(errs);
-    if (Object.keys(errs).length === 0) {
-      setLoading(true);
-      setTimeout(() => { setLoading(false); navigate('/'); }, 1500);
-    }
-  };
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const errs = validate();
+  setErrors(errs);
+
+  if (Object.keys(errs).length > 0) return;
+
+  try {
+    setLoading(true);
+
+    const res = await API.post('/auth/register', {
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      password: form.password,
+      confirm: form.confirm,
+    });
+
+    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('user', JSON.stringify(res.data.user));
+
+    navigate('/');
+  } catch (error) {
+    alert(
+      error.response?.data?.message ||
+      'Registration failed'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleChange = (field, value) => {
     setForm({ ...form, [field]: value });
