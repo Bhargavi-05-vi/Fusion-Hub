@@ -1,7 +1,7 @@
 import Reservation from "../models/Reservation.js";
 import Restaurant from "../models/Restaurant.js";
 
-// Create 
+// Create reservation
 export const createReservation = async (req, res, next) => {
   try {
     const { restaurantId, reservationDate, guests } = req.body;
