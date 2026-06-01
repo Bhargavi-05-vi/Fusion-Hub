@@ -2,7 +2,7 @@ import Order from "../models/Order.js";
 import { getIO } from "../config/socket.js";
 
 
-// Get assigned delivery orders
+// Get assigned delivery 
 export const getAssignedOrders = async (req, res, next) => {
   try {
     const orders = await Order.find({
