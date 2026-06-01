@@ -4,7 +4,7 @@ import User from "../models/User.js";
 import calculateRewardPoints from "../utils/rewardCalculator.js";
 
 
-// Add 
+// Add review
 export const createReview = async (req, res, next) => {
   try {
     const {
