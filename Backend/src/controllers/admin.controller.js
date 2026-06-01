@@ -3,7 +3,7 @@ import Restaurant from "../models/Restaurant.js";
 import Order from "../models/Order.js";
 
 
-// Dashboard stats
+// Dashboard 
 export const getDashboardStats = async (req, res, next) => {
   try {
     const totalUsers = await User.countDocuments();
