@@ -1,7 +1,7 @@
 import Restaurant from "../models/Restaurant.js";
 
 
-// Create 
+// Create resturanta
 export const createRestaurant = async (req, res, next) => {
   try {
     const {
