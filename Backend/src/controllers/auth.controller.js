@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 
 // ─────────────────────────────────────────────
-// POST /api/auth/register
+// POST /api/auth/
 // Frontend RegisterPage se aata hai:
 // { name, email, phone, password, confirm }
 // ─────────────────────────────────────────────
