@@ -4,7 +4,7 @@ import Restaurant from "../models/Restaurant.js";
 import { getIO } from "../config/socket.js";
 
 
-// Create 
+// Create order
 export const createOrder = async (req, res, next) => {
   try {
     const {
