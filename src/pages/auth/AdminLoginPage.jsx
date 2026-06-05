@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiUser, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiShield } from 'react-icons/fi';
-
+import API from '../../services/api';
 
 const AdminLoginPage = () => {
   const [form, setForm] = useState({ username: '', password: '' });
@@ -19,16 +19,35 @@ const AdminLoginPage = () => {
     return errs;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const errs = validate();
-    setErrors(errs);
-    if (Object.keys(errs).length === 0) {
-      setLoading(true);
-      setTimeout(() => { setLoading(false); navigate('/'); }, 1500);
-    }
-  };
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
+  const errs = validate();
+  setErrors(errs);
+
+  if (Object.keys(errs).length > 0) return;
+
+  try {
+    setLoading(true);
+
+    const res = await API.post('/auth/admin-login', {
+      username: form.username,
+      password: form.password,
+    });
+
+    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('user', JSON.stringify(res.data.user));
+
+    navigate('/admin');
+  } catch (error) {
+    alert(
+      error.response?.data?.message ||
+      'Admin login failed'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
   const handleChange = (field, value) => {
     setForm({ ...form, [field]: value });
     if (errors[field]) setErrors({ ...errors, [field]: '' });
