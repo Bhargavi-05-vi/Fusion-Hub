@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiSearch, FiMapPin, FiArrowRight, FiStar } from 'react-icons/fi';
-import { HiOutlineTruck, HiOutlineCalendar, HiOutlineTable } from 'react-icons/hi';
+import {
+  HiOutlineTruck,
+  HiOutlineCalendar,
+  HiOutlineTable,
+} from 'react-icons/hi';
 
 import RestaurantCard from '../components/common/RestaurantCard';
 import EventCard from '../components/common/EventCard';
@@ -13,27 +17,121 @@ import {
 } from '../data/mockData';
 
 const HomePage = () => {
+
   const [searchQuery, setSearchQuery] = useState('');
+const [location, setLocation] = useState('');
+const [suggestions, setSuggestions] = useState([]);
+
   const navigate = useNavigate();
 
+  useEffect(() => {
+
+    navigator.geolocation.getCurrentPosition(
+
+      async (position) => {
+
+      const lat = position.coords.latitude;
+const lon = position.coords.longitude;
+
+console.log("Latitude:", lat);
+console.log("Longitude:", lon);
+
+        try {
+
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+          );
+
+          const data = await response.json();
+
+         const city =
+  data.address.city ||
+  data.address.county ||
+  data.address.town ||
+  data.address.village ||
+  data.address.suburb ||
+  data.address.municipality ||
+  data.address.state_district ||
+  data.address.state ||
+  "Unknown Location";
+
+console.log("Full address data:", data.address);
+
+setLocation(city);
+
+        } catch (error) {
+
+          console.error(error);
+          setLocation("Location Error");
+
+        }
+
+      },
+
+       (error) => {
+    setLocation("");
+  },
+
+  {
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 0,
+  }
+
+    );
+
+  }, []);
+
   const handleSearch = (e) => {
+
     e.preventDefault();
 
     if (searchQuery.trim()) {
+
       navigate(`/food?search=${encodeURIComponent(searchQuery)}`);
+
     }
+
   };
+  const fetchLocations = async (value) => {
+
+  setLocation(value);
+
+  if (value.length < 2) {
+
+    setSuggestions([]);
+    return;
+
+  }
+
+  try {
+
+    const response = await fetch(
+      `https://api.geoapify.com/v1/geocode/autocomplete?text=${value}&apiKey=${import.meta.env.VITE_GEOAPIFY_KEY}`
+    );
+
+    const data = await response.json();
+
+    setSuggestions(data.features || []);
+
+  } catch (error) {
+
+    console.log(error);
+
+  }
+
+};
 
   return (
+
     <div className="min-h-screen w-full bg-[#0D0D0D]">
 
-      {/* ───────────────── HERO SECTION ───────────────── */}
+      {/* HERO SECTION */}
+
       <section className="relative w-full min-h-[92vh] flex items-center justify-center overflow-hidden">
 
-        {/* Background */}
         <div className="absolute inset-0 bg-[#0D0D0D]" />
 
-        {/* Main gradient */}
         <div
           className="absolute inset-0"
           style={{
@@ -42,24 +140,18 @@ const HomePage = () => {
           }}
         />
 
-        {/* Glow blobs */}
-        <div className="absolute top-1/4 left-0 w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-orange-900/10 rounded-full blur-[100px]" />
-
-        {/* Content */}
         <div className="relative z-10 w-full max-w-5xl px-4 sm:px-8 pt-24 pb-16 flex flex-col items-center text-center">
 
-          {/* Badge */}
           <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-8">
+
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
 
             <span className="text-white/70 text-sm font-medium">
               Delivering in 30+ cities across India
             </span>
+
           </div>
 
-          {/* Heading */}
           <h1
             className="font-display font-bold text-white leading-tight mb-6 animate-fadeIn"
             style={{
@@ -77,87 +169,79 @@ const HomePage = () => {
             <br />
 
             <span className="text-white/80">
-              &amp; Events
+              & Events
             </span>
+
           </h1>
 
-          {/* Subtitle */}
           <p
             className="text-white/50 mb-10 leading-relaxed max-w-2xl"
             style={{
               fontSize: 'clamp(1rem, 1.8vw, 1.15rem)',
             }}
           >
-            Order food, reserve premium tables, and book event tickets —
+            Order food, reserve premium tables and book event tickets —
             all in one seamless platform built for India's modern lifestyle.
           </p>
 
-          {/* Search */}
+          {/* SEARCH BAR */}
+
           <form
             onSubmit={handleSearch}
             className="w-full max-w-2xl mb-8"
           >
+
             <div className="flex items-center glass rounded-2xl p-2 border border-white/10 focus-within:border-orange-500/50 transition-all duration-300">
 
-              {/* Location Dropdown */}
-              <div className="flex items-center gap-2 px-3 border-r border-white/10 mr-2 flex-shrink-0">
-                <FiMapPin className="text-orange-400" />
+              {/* REAL TIME LOCATION */}
 
-                <select
-                  className="bg-transparent text-white/70 text-sm outline-none cursor-pointer"
-                  defaultValue="Bengaluru"
-                >
-                  <option className="text-black">Agra</option>
-                  <option className="text-black">Ahmedabad</option>
-                  <option className="text-black">Ajmer</option>
-                  <option className="text-black">Amritsar</option>
-                  <option className="text-black">Bengaluru</option>
-                  <option className="text-black">Bhopal</option>
-                  <option className="text-black">Bhubaneswar</option>
-                  <option className="text-black">Chandigarh</option>
-                  <option className="text-black">Chennai</option>
-                  <option className="text-black">Coimbatore</option>
-                  <option className="text-black">Delhi</option>
-                  <option className="text-black">Faridabad</option>
-                  <option className="text-black">Ghaziabad</option>
-                  <option className="text-black">Goa</option>
-                  <option className="text-black">Gurgaon</option>
-                  <option className="text-black">Guwahati</option>
-                  <option className="text-black">Hyderabad</option>
-                  <option className="text-black">Indore</option>
-                  <option className="text-black">Jaipur</option>
-                  <option className="text-black">Jammu</option>
-                  <option className="text-black">Jodhpur</option>
-                  <option className="text-black">Kanpur</option>
-                  <option className="text-black">Kochi</option>
-                  <option className="text-black">Kolkata</option>
-                  <option className="text-black">Lucknow</option>
-                  <option className="text-black">Ludhiana</option>
-                  <option className="text-black">Madurai</option>
-                  <option className="text-black">Meerut</option>
-                  <option className="text-black">Mohali</option>
-                  <option className="text-black">Mumbai</option>
-                  <option className="text-black">Mysore</option>
-                  <option className="text-black">Nagpur</option>
-                  <option className="text-black">Nashik</option>
-                  <option className="text-black">Noida</option>
-                  <option className="text-black">Patna</option>
-                  <option className="text-black">Pune</option>
-                  <option className="text-black">Raipur</option>
-                  <option className="text-black">Rajkot</option>
-                  <option className="text-black">Ranchi</option>
-                  <option className="text-black">Shimla</option>
-                  <option className="text-black">Surat</option>
-                  <option className="text-black">Thane</option>
-                  <option className="text-black">Udaipur</option>
-                  <option className="text-black">Vadodara</option>
-                  <option className="text-black">Varanasi</option>
-                  <option className="text-black">Vijayawada</option>
-                  <option className="text-black">Visakhapatnam</option>
-                </select>
-              </div>
+              <div className="relative flex items-center gap-2 px-3 border-r border-white/10 mr-2">
 
-              {/* Input */}
+  <FiMapPin className="text-orange-400" />
+
+  <div className="relative">
+
+    <input
+      type="text"
+      value={location}
+      onChange={(e) => fetchLocations(e.target.value)}
+      placeholder="Enter location"
+      className="bg-transparent text-white text-sm outline-none w-[180px]"
+    />
+
+    {suggestions.length > 0 && (
+
+      <div className="absolute top-10 left-0 bg-[#1A1A1A] border border-white/10 rounded-xl w-[260px] max-h-56 overflow-y-auto z-50">
+
+        {suggestions.map((item, index) => (
+
+          <div
+            key={index}
+            className="p-3 text-sm text-white hover:bg-[#252525] cursor-pointer"
+            onClick={() => {
+
+              setLocation(item.properties.formatted);
+              setSuggestions([]);
+
+            }}
+          >
+
+            {item.properties.formatted}
+
+          </div>
+
+        ))}
+
+      </div>
+
+    )}
+
+  </div>
+
+</div>
+
+              {/* SEARCH INPUT */}
+
               <input
                 type="text"
                 value={searchQuery}
@@ -166,20 +250,24 @@ const HomePage = () => {
                 className="flex-1 bg-transparent text-white placeholder-white/30 text-sm outline-none py-2 px-2 min-w-0"
               />
 
-              {/* Button */}
+              {/* BUTTON */}
+
               <button
                 type="submit"
                 className="flex-shrink-0 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl px-5 py-2.5 flex items-center gap-2 text-sm font-semibold hover:shadow-lg hover:shadow-orange-500/30 transition-all hover:scale-105"
               >
+
                 <FiSearch />
 
                 <span className="hidden sm:inline">
                   Search
                 </span>
-              </button>
-            </div>
-          </form>
 
+              </button>
+
+            </div>
+
+          </form>
           {/* Stats */}
           <div className="flex items-center justify-center flex-wrap gap-6 text-sm text-white/30">
             {[
