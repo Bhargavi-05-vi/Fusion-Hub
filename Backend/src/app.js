@@ -34,7 +34,7 @@ app.use(cookieParser());
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "🚀 FusionHub Backend Running",
+    message: "🚀FusionHub Backend Running",
     version: "1.0.0",
     timestamp: new Date().toISOString(),
   });
@@ -60,5 +60,6 @@ app.use("*", (req, res) => {
 
 // ── Global Error Handler ───────────────────────────────
 app.use(errorHandler);
+
 
 export default app;
