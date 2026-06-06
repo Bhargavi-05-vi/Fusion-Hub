@@ -69,9 +69,11 @@ const RestaurantDetailPage = () => {
           ))}
         </div>
 
-        {/* Menu */}
+        {/* Menu — pass restaurant.id so each card can include it in ADD_ITEM */}
         <div className="space-y-3">
-          {filteredItems.map(item => <MenuItemCard key={item.id} item={item} />)}
+          {filteredItems.map(item => (
+            <MenuItemCard key={item.id} item={item} restaurantId={restaurant.id} />
+          ))}
         </div>
       </div>
 
