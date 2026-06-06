@@ -20,6 +20,7 @@ const HomePage = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
 const [location, setLocation] = useState('');
+const [locationInput, setLocationInput] = useState('');
 const [suggestions, setSuggestions] = useState([]);
 
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ console.log("Longitude:", lon);
 
 console.log("Full address data:", data.address);
 
-setLocation(city);
+setLocationInput(city);
 
         } catch (error) {
 
@@ -95,7 +96,7 @@ setLocation(city);
   };
   const fetchLocations = async (value) => {
 
-  setLocation(value);
+  setLocationInput(value);
 
   if (value.length < 2) {
 
@@ -203,7 +204,7 @@ setLocation(city);
 
     <input
       type="text"
-      value={location}
+      value={locationInput}
       onChange={(e) => fetchLocations(e.target.value)}
       placeholder="Enter location"
       className="bg-transparent text-white text-sm outline-none w-[180px]"
@@ -221,6 +222,7 @@ setLocation(city);
             onClick={() => {
 
               setLocation(item.properties.formatted);
+setLocationInput(item.properties.formatted);
               setSuggestions([]);
 
             }}

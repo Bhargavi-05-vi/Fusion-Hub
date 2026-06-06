@@ -53,10 +53,8 @@ const RegisterPage = () => {
       confirm: form.confirm,
     });
 
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-
-    navigate('/');
+    alert('Registration successful. Please login.');
+navigate('/login');
   } catch (error) {
     alert(
       error.response?.data?.message ||
