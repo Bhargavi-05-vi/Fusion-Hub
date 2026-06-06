@@ -1,22 +1,67 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiMapPin, FiCreditCard, FiCheckCircle, FiArrowLeft } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
+import API from '../services/api';
 
 const CheckoutPage = () => {
   const { cart, total, count, dispatch } = useCart();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', pincode: '' });
   const [payMethod, setPayMethod] = useState('card');
   const [ordered, setOrdered] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const delivery = 49;
   const taxes = Math.round(total * 0.05);
   const grandTotal = total + delivery + taxes;
 
-  const handleOrder = () => {
-    setOrdered(true);
-    dispatch({ type: 'CLEAR_CART' });
+  // Map frontend payment method values to backend-accepted enum values
+  const paymentMethodMap = {
+    card: 'card',
+    upi: 'upi',
+    cod: 'cash', // Backend Order model only accepts 'cash', not 'cod'
+  };
+
+  const handleOrder = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      // Build the delivery address string from form fields
+      const deliveryAddress = `${form.address}, ${form.city} - ${form.pincode}`;
+
+      // Map cart items to the format the backend expects
+      const items = cart.items.map(item => ({
+        menuItemId: item.id,   // backend createOrder uses item.menuItemId
+        quantity: item.qty,
+      }));
+
+      const payload = {
+        restaurantId: cart.restaurantId,
+        items,
+        deliveryAddress,
+        paymentMethod: paymentMethodMap[payMethod] || 'cash',
+      };
+
+      const response = await API.post('/orders', payload);
+
+      if (response.data.success) {
+        setOrderId(response.data.order._id);
+        setOrdered(true);
+        dispatch({ type: 'CLEAR_CART' });
+      } else {
+        setError(response.data.message || 'Something went wrong. Please try again.');
+      }
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to place order. Please try again.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (ordered) return (
@@ -26,7 +71,7 @@ const CheckoutPage = () => {
           <FiCheckCircle className="text-white text-4xl" />
         </div>
         <h2 className="font-display font-bold text-white text-3xl mb-2">Order Placed!</h2>
-        <p className="text-white/50 mb-2">Order #FH{Math.floor(Math.random() * 90000 + 10000)}</p>
+        <p className="text-white/50 mb-2">Order #{orderId ? orderId.slice(-6).toUpperCase() : 'N/A'}</p>
         <p className="text-white/40 text-sm mb-8">Your food is being prepared. Estimated delivery: 30-40 min</p>
         <Link to="/food" className="btn-primary inline-block">Order More Food</Link>
       </div>
@@ -54,6 +99,12 @@ const CheckoutPage = () => {
           ))}
         </div>
 
+        {error && (
+          <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             {step === 1 && (
@@ -78,7 +129,13 @@ const CheckoutPage = () => {
                     </div>
                   ))}
                 </div>
-                <button onClick={() => setStep(2)} className="mt-6 w-full btn-primary py-3.5">Continue to Payment →</button>
+                <button
+                  onClick={() => setStep(2)}
+                  disabled={!form.address || !form.city || !form.pincode}
+                  className="mt-6 w-full btn-primary py-3.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Continue to Payment →
+                </button>
               </div>
             )}
 
@@ -110,8 +167,12 @@ const CheckoutPage = () => {
                     </div>
                   </div>
                 )}
-                <button onClick={handleOrder} className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-3.5 rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-all hover:scale-105">
-                  Place Order · ₹{grandTotal}
+                <button
+                  onClick={handleOrder}
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-3.5 rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {loading ? 'Placing Order...' : `Place Order · ₹${grandTotal}`}
                 </button>
               </div>
             )}
