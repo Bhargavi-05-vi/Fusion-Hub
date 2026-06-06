@@ -2,12 +2,16 @@ import React from 'react';
 import { FiPlus, FiMinus } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 
-const MenuItemCard = ({ item }) => {
+const MenuItemCard = ({ item, restaurantId }) => {
   const { cart, dispatch } = useCart();
   const cartItem = cart.items.find(i => i.id === item.id);
   const qty = cartItem ? cartItem.qty : 0;
 
-  const add = () => dispatch({ type: 'ADD_ITEM', payload: item });
+  // Payload now includes restaurantId so CartContext can store it
+  const add = () => dispatch({
+    type: 'ADD_ITEM',
+    payload: { ...item, restaurantId },
+  });
   const inc = () => dispatch({ type: 'UPDATE_QTY', payload: { id: item.id, qty: qty + 1 } });
   const dec = () => dispatch({ type: 'UPDATE_QTY', payload: { id: item.id, qty: qty - 1 } });
 
