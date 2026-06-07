@@ -22,10 +22,11 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { label: 'Food', path: '/food' },
-    { label: 'Dine Out', path: '/dine-out' },
-    { label: 'Events', path: '/events' },
-  ];
+  { label: 'Food', path: '/food' },
+  { label: 'Dine Out', path: '/dine-out' },
+  { label: 'Events', path: '/events' },
+  { label: 'My Orders', path: '/my-orders' },
+];
 
   const isActive = (path) => location.pathname.startsWith(path);
 
