@@ -21,6 +21,7 @@ import ContactPage from './pages/support/ContactPage';
 import PrivacyPolicyPage from './pages/support/PrivacyPolicyPage';
 import SocketInitializer from './components/common/SocketInitializer';
 import SocketNotifications from "./components/common/SocketNotifications";
+import MyOrdersPage from './pages/orders/MyOrdersPage';
 
 
 const authRoutes = ['/login', '/register', '/admin-login', '/forgot-password'];
@@ -46,6 +47,7 @@ const AppLayout = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin-login" element={<AdminLoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/my-orders" element={<MyOrdersPage />} />
         <Route path="/help"    element={<HelpCenterPage />} />
 <Route path="/contact" element={<ContactPage />} />
 <Route path="/privacy" element={<PrivacyPolicyPage />} />
