@@ -19,6 +19,8 @@ import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import HelpCenterPage from './pages/support/HelpCenterPage';
 import ContactPage from './pages/support/ContactPage';
 import PrivacyPolicyPage from './pages/support/PrivacyPolicyPage';
+import SocketInitializer from './components/common/SocketInitializer';
+import SocketNotifications from "./components/common/SocketNotifications";
 
 
 const authRoutes = ['/login', '/register', '/admin-login', '/forgot-password'];
@@ -55,9 +57,11 @@ const AppLayout = () => {
 
 function App() {
   return (
-    <CartProvider>
-      <AppLayout />
-    </CartProvider>
+  <CartProvider>
+  <SocketInitializer />
+  <SocketNotifications />
+  <AppLayout />
+</CartProvider>
   );
 }
 
