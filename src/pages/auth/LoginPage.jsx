@@ -4,7 +4,7 @@ import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import { HiOutlineSparkles } from 'react-icons/hi';
 import API from '../../services/api';
-
+import socket from '../../services/socket';
 const LoginPage = () => {
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -38,19 +38,35 @@ const LoginPage = () => {
   try {
     setLoading(true);
 
-    const res = await API.post('/auth/login', {
+    const res = await API.post("/auth/login", {
       email: form.email,
       password: form.password,
     });
 
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
+    console.log("LOGIN RESPONSE:", res.data);
 
-    navigate('/');
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+
+    if (res.data.user?._id) {
+      socket.connect();
+
+      socket.emit(
+        "join-user-room",
+        res.data.user._id
+      );
+
+      console.log(
+        "Joined Room:",
+        res.data.user._id
+      );
+    }
+
+    navigate("/");
   } catch (error) {
     alert(
       error.response?.data?.message ||
-      'Login failed'
+      "Login failed"
     );
   } finally {
     setLoading(false);
