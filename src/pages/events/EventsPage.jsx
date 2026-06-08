@@ -21,7 +21,7 @@ const EventsPage = () => {
         <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-pink-500/5 rounded-full blur-3xl" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <h1 className="font-display font-bold text-white text-4xl mb-2">Events & Experiences</h1>
-          <p className="text-white/40 mb-8">Concerts, comedy, food fests, and more — book your next great memory</p>
+          <p className="text-white/40 mb-8">Concerts, comedy, food fests and more — book your next great memory</p>
           <div className="flex gap-3 max-w-xl">
             <div className="flex-1 flex items-center gap-2 glass rounded-xl px-4 py-2.5 border border-white/10 focus-within:border-purple-500/50">
               <FiSearch className="text-white/30" />
