@@ -12,12 +12,16 @@ import {
 
 const router = express.Router();
 
-router.post("/", protect, authorizeRoles("customer"), createOrder);
+// Customer places an order
+router.post("/", protect, authorizeRoles("customer", "admin"), createOrder);
 
+// Customer sees their own orders
 router.get("/my-orders", protect, getMyOrders);
 
+// Get single order detail
 router.get("/:id", protect, getSingleOrder);
 
+// Restaurant/admin updates order status
 router.patch(
   "/:id/status",
   protect,
@@ -25,6 +29,7 @@ router.patch(
   updateOrderStatus
 );
 
+// Admin/restaurant assigns delivery partner
 router.patch(
   "/:id/assign-delivery",
   protect,
