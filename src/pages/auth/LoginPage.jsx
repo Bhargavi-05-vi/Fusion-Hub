@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle } from 'react-icons/fi';
-import { FcGoogle } from 'react-icons/fc';
 import { HiOutlineSparkles } from 'react-icons/hi';
 import API from '../../services/api';
 import socket from '../../services/socket';
@@ -185,15 +184,7 @@ const LoginPage = () => {
             </button>
           </form>
 
-          <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-white/10"></div>
-            <span className="text-white/30 text-xs">or continue with</span>
-            <div className="flex-1 h-px bg-white/10"></div>
-          </div>
-
-          <button className="w-full glass border border-white/10 rounded-xl py-3 flex items-center justify-center gap-3 text-white text-sm font-medium hover:border-white/20 hover:bg-white/5 transition-all">
-            <FcGoogle className="text-xl" /> Continue with Google
-          </button>
+  
 
           <p className="text-center text-white/30 text-sm mt-6">
             Don't have an account? <Link to="/register" className="text-orange-400 font-medium hover:text-orange-300 transition-colors">Create one</Link>
