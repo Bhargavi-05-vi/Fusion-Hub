@@ -95,32 +95,29 @@ setLocationInput(city);
 
   };
   const fetchLocations = async (value) => {
-
   setLocationInput(value);
 
   if (value.length < 2) {
-
     setSuggestions([]);
     return;
-
   }
 
   try {
-
     const response = await fetch(
-      `https://api.geoapify.com/v1/geocode/autocomplete?text=${value}&apiKey=${import.meta.env.VITE_GEOAPIFY_KEY}`
+      `https://api.geoapify.com/v1/geocode/autocomplete?text=${value}&filter=countrycode:in&type=city&limit=10&apiKey=${import.meta.env.VITE_GEOAPIFY_KEY}`
     );
 
     const data = await response.json();
 
-    setSuggestions(data.features || []);
+    setSuggestions(
+      (data.features || []).filter(
+        (item) => item.properties.country === "India"
+      )
+    );
 
   } catch (error) {
-
     console.log(error);
-
   }
-
 };
 
   return (
