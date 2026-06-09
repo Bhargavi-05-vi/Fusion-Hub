@@ -17,16 +17,18 @@ const Navbar = () => {
     const onScroll = () => setScrolled(window.scrollY > 20);
 
     window.addEventListener('scroll', onScroll);
-
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Centralized Navigation Links (Includes your new history links)
   const navLinks = [
-  { label: 'Food', path: '/food' },
-  { label: 'Dine Out', path: '/dine-out' },
-  { label: 'Events', path: '/events' },
-  { label: 'My Orders', path: '/my-orders' },
-];
+    { label: 'Food', path: '/food' },
+    { label: 'Dine Out', path: '/dine-out' },
+    { label: 'Events', path: '/events' },
+    { label: 'My Orders', path: '/my-orders' },
+    { label: 'Event History', path: '/event-history' },
+    { label: 'Reservations', path: '/reservation-history' },
+  ];
 
   const isActive = (path) => location.pathname.startsWith(path);
 
@@ -34,7 +36,6 @@ const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-
     window.location.reload();
   };
 
@@ -46,6 +47,7 @@ const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          
           {/* LOGO */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
@@ -55,7 +57,6 @@ const Navbar = () => {
                 className="w-12 h-12 object-contain rounded-2xl group-hover:scale-110 transition-all duration-500"
               />
             </div>
-
             <span className="font-display font-bold text-xl tracking-tight">
               <span className="text-white">Fusion</span>
               <span className="text-gradient-orange">Hub</span>
@@ -75,7 +76,6 @@ const Navbar = () => {
                 }`}
               >
                 {link.label}
-
                 <span
                   className={`absolute bottom-0 left-4 right-4 h-0.5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-300 ${
                     isActive(link.path)
@@ -95,7 +95,6 @@ const Navbar = () => {
               className="relative p-2.5 text-white/70 hover:text-white transition-colors duration-300"
             >
               <FiShoppingCart className="text-xl" />
-
               {count > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-orange-500 to-red-500 rounded-full text-xs font-bold flex items-center justify-center text-white">
                   {count}
@@ -109,7 +108,6 @@ const Navbar = () => {
                 <span className="text-white text-sm font-medium">
                   Welcome, {user.name}
                 </span>
-
                 <button
                   onClick={handleLogout}
                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm transition-all"
@@ -142,7 +140,6 @@ const Navbar = () => {
           <div className="flex md:hidden items-center gap-3">
             <Link to="/cart" className="relative p-2 text-white">
               <FiShoppingCart className="text-xl" />
-
               {count > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full text-xs flex items-center justify-center">
                   {count}
@@ -154,11 +151,7 @@ const Navbar = () => {
               onClick={() => setMenuOpen(!menuOpen)}
               className="text-white p-2"
             >
-              {menuOpen ? (
-                <FiX className="text-xl" />
-              ) : (
-                <FiMenu className="text-xl" />
-              )}
+              {menuOpen ? <FiX className="text-xl" /> : <FiMenu className="text-xl" />}
             </button>
           </div>
         </div>
@@ -184,10 +177,9 @@ const Navbar = () => {
             <div className="border-t border-white/10 mt-3 pt-3">
               {user ? (
                 <div className="flex flex-col gap-3">
-                  <p className="text-white text-center">
+                  <p className="text-white text-center text-sm font-medium">
                     Welcome, {user.name}
                   </p>
-
                   <button
                     onClick={handleLogout}
                     className="bg-red-500 text-white text-sm py-2 rounded-full"
