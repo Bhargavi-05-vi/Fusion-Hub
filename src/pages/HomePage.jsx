@@ -82,8 +82,8 @@ const HomePage = () => {
 
     try {
       const response = await fetch(
-        `https://api.geoapify.com/v1/geocode/autocomplete?text=${value}&apiKey=${import.meta.env.VITE_GEOAPIFY_KEY}`
-      );
+  `https://api.geoapify.com/v1/geocode/autocomplete?text=${value}&filter=countrycode:in&bias=countrycode:in&apiKey=${import.meta.env.VITE_GEOAPIFY_KEY}`
+);
 
       const data = await response.json();
       setSuggestions(data.features || []);
