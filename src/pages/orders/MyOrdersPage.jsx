@@ -5,57 +5,76 @@ const MyOrdersPage = () => {
   const [reviews, setReviews] = useState({});
   const [currentTime, setCurrentTime] = useState(Date.now());
 
-  // 1. Initial Load from LocalStorage
+  // 1. Load initial data from localStorage
   useEffect(() => {
     const savedOrders = JSON.parse(localStorage.getItem("orders")) || [];
     const savedReviews = JSON.parse(localStorage.getItem("reviews")) || {};
 
-    setOrders(savedOrders);
+    // Mock/Fallback injector: If orders exist but lack 'cancelUntil', 
+    // we safely inject a 1-minute window for demonstration purposes.
+    const normalizedOrders = savedOrders.map(order => {
+      if ((order.status === "Pending" || order.status === "Placed" || !order.status) && !order.cancelUntil) {
+        return {
+          ...order,
+          status: order.status || "Pending",
+          cancelUntil: (order.date ? new Date(order.date).getTime() : Date.now()) + 60000 // 1 minute window
+        };
+      }
+      return order;
+    });
+
+    setOrders(normalizedOrders);
     setReviews(savedReviews);
   }, []);
 
-  // 2. Combined Clock & Order Expiry Check (Prevents Infinite Loop)
+  // 2. Centralized 1-second clock + order status auto-updater
   useEffect(() => {
     const timer = setInterval(() => {
       const now = Date.now();
       setCurrentTime(now);
 
+      // Check if any order needs its status updated from Pending -> Confirmed
       setOrders((prevOrders) => {
         let hasChanges = false;
-
+        
         const updated = prevOrders.map((order) => {
-          if (order.status === "Pending" && now > order.cancelUntil) {
+          const isPending = order.status === "Pending" || order.status === "Placed" || !order.status;
+          
+          if (isPending && order.cancelUntil && now > order.cancelUntil) {
             hasChanges = true;
-            return {
-              ...order,
-              status: "Placed Successfully",
-            };
+            return { ...order, status: "Confirmed" };
           }
           return order;
         });
 
-        // Only update localStorage and state if an order actually expired
         if (hasChanges) {
           localStorage.setItem("orders", JSON.stringify(updated));
           return updated;
         }
-        return prevOrders;
+        
+        return prevOrders; // Return exact same reference if no changes occurred
       });
     }, 1000);
 
     return () => clearInterval(timer);
   }, []);
 
-  // 3. Cancel Order Handler
-  const cancelOrder = (orderId) => {
-    setOrders((prevOrders) => {
-      const updated = prevOrders.map((order) =>
-        order.id === orderId ? { ...order, status: "Cancelled" } : order
-      );
-      localStorage.setItem("orders", JSON.stringify(updated));
-      return updated;
-    });
+  const cancelOrder = (id) => {
+    const updatedOrders = orders.map((order) =>
+      order.id === id ? { ...order, status: "Cancelled" } : order
+    );
+
+    setOrders(updatedOrders);
+    localStorage.setItem("orders", JSON.stringify(updatedOrders));
     alert("Order cancelled successfully ❌");
+  };
+
+  const getRemainingTime = (cancelUntil) => {
+    const remaining = Math.max(0, cancelUntil - currentTime);
+    const minutes = Math.floor(remaining / 1000 / 60);
+    const seconds = Math.floor((remaining / 1000) % 60);
+
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
   const getRatingEmoji = (rating) => {
@@ -74,174 +93,158 @@ const MyOrdersPage = () => {
       ...reviews,
       [itemId]: { rating, comment },
     };
-
     setReviews(updatedReviews);
     localStorage.setItem("reviews", JSON.stringify(updatedReviews));
   };
 
   const handleRating = (itemId, rating) => {
-    const existingComment = reviews[itemId]?.comment || "";
-    saveReview(itemId, rating, existingComment);
+    const comment = reviews[itemId]?.comment || "";
+    saveReview(itemId, rating, comment);
   };
 
   const handleCommentChange = (itemId, comment) => {
-    const existingRating = reviews[itemId]?.rating || 0;
-    saveReview(itemId, existingRating, comment);
+    const rating = reviews[itemId]?.rating || 0;
+    saveReview(itemId, rating, comment);
   };
 
   const handleSubmitReview = (itemId) => {
     if (!reviews[itemId]?.rating) {
-      alert("Please select a rating first ⭐");
+      alert("Please select rating first ⭐");
       return;
     }
-    alert(`Review submitted successfully!\n${getRatingEmoji(reviews[itemId].rating)}`);
+    alert("Review submitted successfully ✅");
   };
 
-  const handleDeleteReview = (itemId) => {
-    const updatedReviews = { ...reviews };
-    delete updatedReviews[itemId];
-
-    setReviews(updatedReviews);
-    localStorage.setItem("reviews", JSON.stringify(updatedReviews));
-    alert("Review deleted successfully 🗑️");
+  const deleteReview = (itemId) => {
+    const updated = { ...reviews };
+    delete updated[itemId];
+    setReviews(updated);
+    localStorage.setItem("reviews", JSON.stringify(updated));
+    alert("Review deleted 🗑️");
   };
 
-  const getRemainingTime = (cancelUntil) => {
-    const remaining = Math.max(0, cancelUntil - currentTime);
-    const minutes = Math.floor(remaining / 1000 / 60);
-    const seconds = Math.floor((remaining / 1000) % 60);
-
-    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-  };
+  const foodOrders = orders.filter((order) => order.items);
 
   return (
     <div className="min-h-screen pt-24 px-6 bg-black text-white">
-      <h1 className="text-3xl font-bold text-white mb-6">Purchase History</h1>
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">Purchase History</h1>
 
-      {orders.length === 0 ? (
-        <div className="text-white/60">No orders found</div>
-      ) : (
-        orders.map((order) => (
-          <div
-            key={order.id}
-            className="bg-[#1A1A1A] rounded-xl border border-white/10 p-5 mb-6"
-          >
-            {/* Order Header */}
-            <div className="flex justify-between items-center">
-              <h3 className="text-white font-bold">Order #{order.id}</h3>
-              <span className="text-orange-400 font-semibold">₹{order.total}</span>
-            </div>
-
-            <p className="text-white/50 text-sm mt-1">
-              {new Date(order.date).toLocaleString()}
-            </p>
-
-            <p className={`mt-2 font-medium ${order.status === 'Cancelled' ? 'text-red-500' : 'text-green-400'}`}>
-              {order.status}
-            </p>
-
-            {/* FIXED: Cancellation Logic moved outside of items iteration to Order level */}
-            {order.status === "Pending" && (
-              <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/15 max-w-xs">
-                <p className="text-sm text-white/70">Auto Confirm In:</p>
-                <p className="text-xl font-bold text-orange-400">
-                  {getRemainingTime(order.cancelUntil)}
-                </p>
-                <button
-                  onClick={() => cancelOrder(order.id)}
-                  className="mt-2 w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition-all text-sm"
-                >
-                  Cancel Order
-                </button>
-              </div>
-            )}
-
-            {/* Items Ordered List */}
-            <div className="mt-4 space-y-4">
-              {order.items.map((item) => (
-                <div
-                  key={item.id}
-                  className="border border-white/10 rounded-lg p-4 bg-zinc-900/50"
-                >
-                  <div className="flex justify-between text-white">
-                    <span>{item.name} × {item.qty}</span>
-                    <span>₹{item.price * item.qty}</span>
-                  </div>
-
-                  {/* Rating Stars */}
-                  <div className="flex gap-2 mt-3">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => handleRating(item.id, star)}
-                        className={`text-2xl transition-all hover:scale-125 ${
-                          (reviews[item.id]?.rating || 0) >= star
-                            ? "text-yellow-400"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Emoji Reaction */}
-                  {reviews[item.id]?.rating > 0 && (
-                    <div className="mt-2 text-sm font-medium text-yellow-500">
-                      {getRatingEmoji(reviews[item.id].rating)}
-                    </div>
-                  )}
-
-                  {/* Review Comment Input */}
-                  <textarea
-                    value={reviews[item.id]?.comment || ""}
-                    onChange={(e) => handleCommentChange(item.id, e.target.value)}
-                    placeholder="Write your review..."
-                    className="w-full mt-3 bg-black/30 border border-white/10 rounded-lg p-3 text-white placeholder:text-white/40 focus:outline-none focus:border-orange-500 text-sm"
-                    rows="2"
-                  />
-
-                  {/* Actions */}
-                  <div className="mt-3 flex gap-3 flex-wrap">
-                    <button
-                      onClick={() => handleSubmitReview(item.id)}
-                      className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:scale-105 transition-all"
-                    >
-                      ✅ Submit Review
-                    </button>
-
-                    {reviews[item.id]?.rating > 0 && (
-                      <button
-                        onClick={() => handleDeleteReview(item.id)}
-                        className="bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600 hover:text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition-all"
-                      >
-                        🗑️ Delete Review
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Saved Review Preview */}
-                  {reviews[item.id]?.rating > 0 && (
-                    <div className="mt-4 p-3 bg-black/40 rounded-lg border border-white/5">
-                      <p className="text-green-400 font-medium text-xs">
-                        Saved Review Summary:
-                      </p>
-                      <p className="text-sm mt-1 font-semibold">
-                        {reviews[item.id].rating}/5 ⭐ — {getRatingEmoji(reviews[item.id].rating)}
-                      </p>
-                      {reviews[item.id]?.comment && (
-                        <p className="text-white/70 text-sm mt-1 italic">
-                          "{reviews[item.id].comment}"
+        {foodOrders.length === 0 ? (
+          <p className="text-gray-400">No orders found.</p>
+        ) : (
+          <div className="space-y-6">
+            {foodOrders.map((order) => {
+              const isPending = order.status === "Pending" || order.status === "Placed" || !order.status;
+              
+              return (
+                <div key={order.id} className="bg-[#1A1A1A] border border-white/10 rounded-xl p-5">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h2 className="font-bold text-lg">Order #{order.id}</h2>
+                      {order.date && (
+                        <p className="text-gray-400 text-sm">
+                          {new Date(order.date).toLocaleString()}
                         </p>
                       )}
                     </div>
+
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        order.status === "Cancelled"
+                          ? "bg-red-500/10 text-red-400"
+                          : isPending
+                          ? "bg-orange-500/10 text-orange-400"
+                          : "bg-green-500/10 text-green-400"
+                      }`}
+                    >
+                      {order.status || "Pending"}
+                    </span>
+                  </div>
+
+                  {isPending && order.cancelUntil && (
+                    <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
+                      <p className="text-sm text-gray-400">Cancel available for:</p>
+                      <p className="text-orange-400 text-xl font-bold">
+                        {getRemainingTime(order.cancelUntil)}
+                      </p>
+                      <button
+                        onClick={() => cancelOrder(order.id)}
+                        className="mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm transition"
+                      >
+                        Cancel Order
+                      </button>
+                    </div>
                   )}
+
+                  <h3 className="font-semibold text-orange-400 mb-3">Food Order</h3>
+
+                  {order.items.map((item) => (
+                    <div key={item.id} className="mb-4 border border-white/10 rounded-lg p-4">
+                      <div className="flex justify-between mb-3">
+                        <span>{item.name} × {item.qty}</span>
+                        <span>₹{item.price * item.qty}</span>
+                      </div>
+
+                      <div className="flex gap-2 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            onClick={() => handleRating(item.id, star)}
+                            className={`text-2xl ${
+                              (reviews[item.id]?.rating || 0) >= star
+                                ? "text-yellow-400"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+
+                      {reviews[item.id]?.rating && (
+                        <p className="text-yellow-400 mb-2">
+                          {getRatingEmoji(reviews[item.id].rating)}
+                        </p>
+                      )}
+
+                      <textarea
+                        rows="2"
+                        value={reviews[item.id]?.comment || ""}
+                        onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                        placeholder="Write review..."
+                        className="w-full bg-black border border-white/10 rounded-lg p-3 text-white"
+                      />
+
+                      <div className="flex gap-3 mt-3">
+                        <button
+                          onClick={() => handleSubmitReview(item.id)}
+                          className="bg-orange-500 px-4 py-2 rounded-lg text-sm"
+                        >
+                          Submit Review
+                        </button>
+
+                        {reviews[item.id]?.rating && (
+                          <button
+                            onClick={() => deleteReview(item.id)}
+                            className="bg-red-600 px-4 py-2 rounded-lg text-sm"
+                          >
+                            Delete Review
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="mt-4 font-bold text-orange-400">
+                    Total: ₹{order.total || 0}
+                  </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        ))
-      )}
+        )}
+      </div>
     </div>
   );
 };
