@@ -1,17 +1,57 @@
 import crypto from "crypto";
+import nodemailer from "nodemailer";
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 
 // ─────────────────────────────────────────────
+// Helper: send password reset email via Nodemailer
+// Reads EMAIL_USER and EMAIL_PASS from .env
+// For Gmail, EMAIL_PASS must be a 16-char App Password
+// (Google Account → Security → 2-Step → App passwords)
+// ─────────────────────────────────────────────
+const sendResetEmail = async (email, resetUrl, name) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: `"FusionHub" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Reset your FusionHub password",
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;
+                  background:#1a1a1a;color:#f5f1ea;border-radius:12px;">
+        <h2 style="color:#f97316;margin-bottom:8px;">Password Reset Request</h2>
+        <p>Hi ${name},</p>
+        <p>We received a request to reset your FusionHub password.
+           Click the button below — this link is valid for <strong>10 minutes</strong>.</p>
+        <a href="${resetUrl}"
+           style="display:inline-block;margin:24px 0;padding:14px 28px;
+                  background:linear-gradient(to right,#f97316,#ef4444);
+                  color:#fff;font-weight:bold;border-radius:10px;text-decoration:none;">
+          Reset Password
+        </a>
+        <p style="color:#888;font-size:13px;">
+          If you didn't request this, you can safely ignore this email.
+        </p>
+        <hr style="border-color:#333;margin:24px 0"/>
+        <p style="color:#555;font-size:12px;">— The FusionHub Team</p>
+      </div>
+    `,
+  });
+};
+
+// ─────────────────────────────────────────────
 // POST /api/auth/register
-// Frontend RegisterPage se aata hai:
-// { name, email, phone, password, confirm }
 // ─────────────────────────────────────────────
 export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password, confirm, phone, role } = req.body;
 
-    // Basic validation
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -19,7 +59,6 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    // Password confirm match check
     if (confirm && confirm !== password) {
       return res.status(400).json({
         success: false,
@@ -27,7 +66,6 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    // Password strength check (frontend ke saath match)
     if (password.length < 8) {
       return res.status(400).json({
         success: false,
@@ -42,7 +80,6 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    // Phone validation (agar diya gaya ho)
     if (phone && !/^[6-9]\d{9}$/.test(phone.replace(/\s/g, ""))) {
       return res.status(400).json({
         success: false,
@@ -50,8 +87,9 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    // Email already registered?
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    const existingUser = await User.findOne({
+      email: email.toLowerCase().trim(),
+    });
     if (existingUser) {
       return res.status(409).json({
         success: false,
@@ -59,9 +97,7 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    // User create karo
-    // "user" role ko "customer" mein normalize karo
-    const normalizedRole = (!role || role === "user") ? "customer" : role;
+    const normalizedRole = !role || role === "user" ? "customer" : role;
 
     const user = await User.create({
       name: name.trim(),
@@ -92,8 +128,6 @@ export const registerUser = async (req, res, next) => {
 
 // ─────────────────────────────────────────────
 // POST /api/auth/login
-// Frontend LoginPage se aata hai:
-// { email, password }
 // ─────────────────────────────────────────────
 export const loginUser = async (req, res, next) => {
   try {
@@ -106,7 +140,6 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
-    // User find karo (password select karo explicitly)
     const user = await User.findOne({
       email: email.toLowerCase().trim(),
     }).select("+password");
@@ -125,7 +158,6 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
-    // Password verify
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
@@ -155,9 +187,6 @@ export const loginUser = async (req, res, next) => {
 
 // ─────────────────────────────────────────────
 // POST /api/auth/admin-login
-// Frontend AdminLoginPage se aata hai:
-// { username, password }
-// username email ya name ho sakta hai
 // ─────────────────────────────────────────────
 export const adminLogin = async (req, res, next) => {
   try {
@@ -177,7 +206,6 @@ export const adminLogin = async (req, res, next) => {
       });
     }
 
-    // Admin ko email ya name se dhundo
     const admin = await User.findOne({
       $or: [
         { email: username.toLowerCase().trim() },
@@ -187,18 +215,12 @@ export const adminLogin = async (req, res, next) => {
     }).select("+password");
 
     if (!admin) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials",
-      });
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
     const isMatch = await admin.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials",
-      });
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
     const token = generateToken(admin);
@@ -221,23 +243,18 @@ export const adminLogin = async (req, res, next) => {
 
 // ─────────────────────────────────────────────
 // POST /api/auth/forgot-password
-// Frontend ForgotPasswordPage se aata hai:
-// { email }
 // ─────────────────────────────────────────────
 export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required",
-      });
+      return res.status(400).json({ success: false, message: "Email is required" });
     }
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
 
-    // Security: chahe user ho ya na ho, same message do
+    // Always return the same response — don't leak whether email exists
     if (!user) {
       return res.status(200).json({
         success: true,
@@ -245,23 +262,30 @@ export const forgotPassword = async (req, res, next) => {
       });
     }
 
-    // Reset token generate karo
     const resetToken = user.getPasswordResetToken();
     await user.save({ validateBeforeSave: false });
 
-    // Reset URL (frontend par reset-password page hona chahiye)
-    const resetUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password?token=${resetToken}`;
+    const resetUrl = `${
+      process.env.CLIENT_URL || "http://localhost:5173"
+    }/reset-password?token=${resetToken}`;
 
-    console.log(`[DEV] Password Reset URL for ${email}: ${resetUrl}`);
+    try {
+      await sendResetEmail(user.email, resetUrl, user.name);
+    } catch (emailError) {
+      // Roll back the token if email fails so user can try again
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save({ validateBeforeSave: false });
 
-    // Production mein nodemailer se email bhejo
-    // await sendPasswordResetEmail(email, resetToken, user.name);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send reset email. Please try again later.",
+      });
+    }
 
     return res.status(200).json({
       success: true,
       message: "Password reset link sent to your email.",
-      // Dev mein token return karo testing ke liye
-      ...(process.env.NODE_ENV === "development" && { resetToken, resetUrl }),
     });
   } catch (error) {
     next(error);
@@ -270,7 +294,6 @@ export const forgotPassword = async (req, res, next) => {
 
 // ─────────────────────────────────────────────
 // POST /api/auth/reset-password
-// { token, password }
 // ─────────────────────────────────────────────
 export const resetPassword = async (req, res, next) => {
   try {
@@ -283,11 +306,7 @@ export const resetPassword = async (req, res, next) => {
       });
     }
 
-    // Token hash karo aur match karo
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await User.findOne({
       passwordResetToken: hashedToken,
@@ -327,7 +346,6 @@ export const resetPassword = async (req, res, next) => {
 // ─────────────────────────────────────────────
 export const getProfile = async (req, res, next) => {
   try {
-    // req.user already DB se aaya hai (protect middleware se)
     return res.status(200).json({
       success: true,
       user: {
@@ -357,13 +375,9 @@ export const updateProfile = async (req, res, next) => {
     const user = await User.findById(req.user._id);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // Phone validation agar update kiya
     if (phone && !/^[6-9]\d{9}$/.test(phone.replace(/\s/g, ""))) {
       return res.status(400).json({
         success: false,
@@ -400,13 +414,8 @@ export const updateProfile = async (req, res, next) => {
 // ─────────────────────────────────────────────
 export const logoutUser = async (req, res, next) => {
   try {
-    // JWT stateless hai, client side se token remove karo
-    // Agar cookies use kar rahe ho toh clear karo
     res.clearCookie("token");
-    return res.status(200).json({
-      success: true,
-      message: "Logged out successfully",
-    });
+    return res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (error) {
     next(error);
   }
