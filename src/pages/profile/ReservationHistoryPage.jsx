@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const ReservationHistoryPage = () => {
   // Safe, lazy state initialization from localStorage ('reservations' or 'orders')
@@ -14,13 +14,44 @@ const ReservationHistoryPage = () => {
     }
   });
 
+  // Track the current real-world time to dynamically calculate cancellation windows
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  // ── 1-Second Ticker Clock ─────────────────────────────
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   // Filter down to table reservations or dine-out orders
   const filteredReservations = reservations.filter(
     (item) => item && (item.type === "RESERVATION" || item.type === "DINE-OUT" || !item.type)
   );
 
+  // ── Parse Reservation Date/Time into Timestamp ────────
+  const getReservationTimestamp = (resDate, resTime) => {
+    if (!resDate) return 0;
+    
+    try {
+      // Ensure the time component defaults gracefully if missing
+      const timeString = resTime || "00:00";
+      
+      // Combines "YYYY-MM-DD" and "HH:MM" strings into a valid parsable ISO format
+      const reservationDateTime = new Date(`${resDate}T${timeString}`);
+      return reservationDateTime.getTime() || 0;
+    } catch (e) {
+      console.error("Failed to parse reservation date/time format", e);
+      return 0;
+    }
+  };
+
   // Cancellation handler
   const handleCancelReservation = (id, index) => {
+    if (!window.confirm("Are you sure you want to cancel this reservation?")) return;
+
     // 1. Determine which key is actually holding the data in localStorage
     const storageKey = localStorage.getItem("reservations") ? "reservations" : "orders";
     
@@ -48,8 +79,8 @@ const ReservationHistoryPage = () => {
   }
 
   return (
-    <div className="min-h-screen pt-24 px-6 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold text-white mb-6">
+    <div className="min-h-screen pt-24 px-6 max-w-5xl mx-auto bg-black text-white">
+      <h1 className="text-3xl font-bold mb-6">
         Table Reservations
       </h1>
 
@@ -58,7 +89,18 @@ const ReservationHistoryPage = () => {
       ) : (
         <div className="space-y-4">
           {filteredReservations.map((res, index) => {
-            const currentStatus = res.status || "Confirmed";
+            // 1. Compute dynamic expiration metrics
+            const reservationTimeMs = getReservationTimestamp(res.date, res.time);
+            const isPastReservation = currentTime >= reservationTimeMs;
+            
+            // 2. Control cancellation permissions
+            const isCancellable = res.status !== "Cancelled" && !isPastReservation;
+
+            // 3. Evaluate display status context layout
+            let currentStatus = res.status || "Confirmed";
+            if (currentStatus !== "Cancelled" && isPastReservation) {
+              currentStatus = "Completed"; // Gracefully tags old bookings as completed
+            }
             
             return (
               <div
@@ -69,7 +111,7 @@ const ReservationHistoryPage = () => {
                   {/* RESTAURANT NAME */}
                   <h2 className="text-white font-bold text-xl mb-3">
                     {res.restaurantName || "Unknown Restaurant"}
-                  </h2>
+                  </h2> 
 
                   {/* DETAILS SECTION */}
                   <div className="space-y-2 text-sm text-gray-300">
@@ -101,11 +143,13 @@ const ReservationHistoryPage = () => {
                 <div className="flex flex-row md:flex-col lg:flex-row items-center gap-4 self-end md:self-center">
                   {/* DYNAMIC STATUS BADGE */}
                   <span
-                    className={`px-4 py-2 rounded-full text-sm font-semibold border capitalize ${
+                    className={`px-4 py-2 rounded-full text-sm font-semibold border capitalize transition-colors duration-300 ${
                       currentStatus === "Cancelled"
                         ? "bg-red-500/10 text-red-400 border-red-500/20"
                         : currentStatus === "Pending"
                         ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                        : currentStatus === "Completed"
+                        ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
                         : "bg-green-500/10 text-green-400 border-green-500/20"
                     }`}
                   >
@@ -113,7 +157,7 @@ const ReservationHistoryPage = () => {
                   </span>
 
                   {/* CONDITIONAL CANCEL BUTTON */}
-                  {currentStatus !== "Cancelled" && (
+                  {isCancellable && (
                     <button
                       onClick={() => handleCancelReservation(res.id, index)}
                       className="bg-red-500 hover:bg-red-600 text-white font-medium text-sm px-4 py-2 rounded-lg transition-all duration-200"
