@@ -12,7 +12,7 @@ const router = express.Router();
 router.post(
   "/",
   protect,
-  authorizeRoles("customer"),
+  authorizeRoles("customer", "admin"),
   createReview
 );
 
