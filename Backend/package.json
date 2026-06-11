@@ -1,5 +1,5 @@
 {
-  "name": "FusionHub-backend",
+  "name": "fusion-hub-backend",
   "version": "1.0.0",
   "description": "FusionHub Backend",
   "main": "server.js",
