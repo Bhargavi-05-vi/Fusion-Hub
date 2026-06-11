@@ -19,7 +19,7 @@ const getRatingEmoji = (rating) => {
 // ── Countdown timer component ─────────────────────────
 const CancelCountdown = ({ createdAt, onExpire }) => {
   const getRemaining = () => {
-    const ms = 30 * 60 * 1000 - (Date.now() - new Date(createdAt).getTime());
+    const ms = 10 * 60 * 1000 - (Date.now() - new Date(createdAt).getTime());
     return Math.max(0, ms);
   };
 
@@ -93,7 +93,7 @@ const MyOrdersPage = () => {
     if (!['PLACED', 'ACCEPTED'].includes(order.status)) return false;
     if (expiredOrders.has(order._id)) return false;
     const diffMinutes = (Date.now() - new Date(order.createdAt).getTime()) / 60000;
-    return diffMinutes <= 30;
+    return diffMinutes <= 10;
   };
 
   // ── Reviews ───────────────────────────────────────────
