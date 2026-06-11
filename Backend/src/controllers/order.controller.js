@@ -301,3 +301,77 @@ export const assignDeliveryPartner = async (req, res, next) => {
     next(error);
   }
 };
+
+
+// Customer cancels their own order (only within 30 minutes of placing)
+export const cancelMyOrder = async (req, res, next) => {
+  try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID format",
+      });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Only the customer who placed it can cancel
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to cancel this order",
+      });
+    }
+
+    // Can only cancel PLACED orders
+    if (!["PLACED", "ACCEPTED"].includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot cancel order with status: ${order.status}`,
+      });
+    }
+
+    // Check 30-minute window
+    const placedAt = new Date(order.createdAt).getTime();
+    const now = Date.now();
+    const diffMinutes = (now - placedAt) / (1000 * 60);
+
+    if (diffMinutes > 30) {
+      return res.status(400).json({
+        success: false,
+        message: "Cancellation window has expired. Orders can only be cancelled within 30 minutes of placing.",
+      });
+    }
+
+    order.status = "CANCELLED";
+    await order.save();
+
+    // Notify via socket
+    try {
+      const io = getIO();
+      io.to(req.user._id.toString()).emit("order-status-updated", {
+        message: "❌ Your order has been cancelled.",
+        status: "CANCELLED",
+        orderId: order._id,
+      });
+    } catch (socketError) {
+      console.error("Socket notification error:", socketError.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order cancelled successfully",
+      order,
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};

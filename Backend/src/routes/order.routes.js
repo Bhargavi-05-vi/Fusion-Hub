@@ -7,6 +7,7 @@ import {
   getMyOrders,
   getSingleOrder,
   updateOrderStatus,
+  cancelMyOrder,
   assignDeliveryPartner,
 } from "../controllers/order.controller.js";
 
@@ -20,6 +21,9 @@ router.get("/my-orders", protect, getMyOrders);
 
 // Get single order detail
 router.get("/:id", protect, getSingleOrder);
+
+// Customer cancels their own order (within 30 min)
+router.patch("/:id/cancel", protect, authorizeRoles("customer", "admin"), cancelMyOrder);
 
 // Restaurant/admin updates order status
 router.patch(
