@@ -106,13 +106,51 @@ const MyOrdersPage = () => {
   const handleCommentChange = (itemId, comment) =>
     saveReview(itemId, reviews[itemId]?.rating || 0, comment);
 
-  const handleSubmitReview = (itemId) => {
+  const handleSubmitReview = async (itemId, order) => {
+  try {
     if (!reviews[itemId]?.rating) {
-      alert('Please select a rating first ⭐');
+      alert("Please select a rating first ⭐");
       return;
     }
-    alert('Review submitted ✅');
-  };
+
+    const restaurantId =
+      order.restaurant?._id ||
+      order.restaurant ||
+      order.restaurantId;
+
+    console.log("FULL ORDER:", order);
+    console.log("RESTAURANT:", order.restaurant);
+    console.log("RESTAURANT ID:", restaurantId);
+
+    if (!restaurantId) {
+      alert("Restaurant ID not found");
+      return;
+    }
+
+    const response = await API.post("/reviews", {
+      restaurantId,
+      rating: reviews[itemId].rating,
+      reviewText:
+        reviews[itemId]?.comment?.trim() ||
+        "Good food and service",
+    });
+
+    console.log(response.data);
+
+    alert(
+      `Review submitted successfully ✅ Reward Points: ${
+        response.data.rewardPoints || 0
+      }`
+    );
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.message ||
+      "Failed to save review"
+    );
+  }
+};
 
   const deleteReview = (itemId) => {
     const updated = { ...reviews };
@@ -288,7 +326,7 @@ const MyOrdersPage = () => {
 
                         <div className="flex gap-3 mt-3">
                           <button
-                            onClick={() => handleSubmitReview(itemId)}
+                            onClick={() => handleSubmitReview(itemId, order)}
                             className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-sm transition"
                           >
                             Submit Review
