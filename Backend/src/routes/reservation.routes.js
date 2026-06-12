@@ -14,21 +14,21 @@ const router = express.Router();
 router.post(
   "/",
   protect,
-  authorizeRoles("customer"),
+  authorizeRoles("customer", "admin"),
   createReservation
 );
 
 router.get(
   "/my-reservations",
   protect,
-  authorizeRoles("customer"),
+  authorizeRoles("customer", "admin"),
   getMyReservations
 );
 
 router.patch(
   "/cancel/:id",
   protect,
-  authorizeRoles("customer"),
+  authorizeRoles("customer", "admin"),
   cancelReservation
 );
 
