@@ -4,7 +4,7 @@ import Restaurant from "../models/Restaurant.js";
 // Create reservation
 export const createReservation = async (req, res, next) => {
   try {
-    const { restaurantId, reservationDate, guests } = req.body;
+    const { restaurantId, reservationDate, guests, customerName, phone } = req.body;
 
     if (!restaurantId || !reservationDate || !guests) {
       return res.status(400).json({
@@ -27,7 +27,12 @@ export const createReservation = async (req, res, next) => {
       restaurant: restaurantId,
       reservationDate,
       guests,
+      customerName: customerName || "",
+      phone: phone || "",
     });
+
+    // Populate restaurant name for the response
+    await reservation.populate("restaurant", "name address image");
 
     res.status(201).json({
       success: true,
@@ -45,7 +50,9 @@ export const getMyReservations = async (req, res, next) => {
   try {
     const reservations = await Reservation.find({
       customer: req.user.id,
-    }).populate("restaurant", "name address");
+    })
+      .populate("restaurant", "name address image")
+      .sort({ reservationDate: -1 }); // newest first
 
     res.status(200).json({
       success: true,
@@ -91,7 +98,7 @@ export const cancelReservation = async (req, res, next) => {
   }
 };
 
-// Restaurant reservations
+// Restaurant reservations (admin/owner)
 export const getRestaurantReservations = async (req, res, next) => {
   try {
     const reservations = await Reservation.find({

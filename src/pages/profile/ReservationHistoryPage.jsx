@@ -1,168 +1,163 @@
 import React, { useState, useEffect } from "react";
+import API from "../../services/api";
 
+/* ── Helpers ─────────────────────────────────────────────────── */
+function formatDateFull(isoString) {
+  if (!isoString) return "—";
+  const d = new Date(isoString);
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${String(d.getDate()).padStart(2,"0")} ${months[d.getMonth()]}, ${d.getFullYear()}`;
+}
+
+function formatTime(isoString) {
+  if (!isoString) return "—";
+  const d = new Date(isoString);
+  const h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, "0");
+  const hh = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  const ampm = h < 12 ? "AM" : "PM";
+  return `${String(hh).padStart(2,"0")}:${m} ${ampm}`;
+}
+
+/* ── Component ───────────────────────────────────────────────── */
 const ReservationHistoryPage = () => {
-  // Safe, lazy state initialization from localStorage ('reservations' or 'orders')
-  const [reservations, setReservations] = useState(() => {
-    try {
-      return (
-        JSON.parse(localStorage.getItem("reservations")) ||
-        JSON.parse(localStorage.getItem("orders")) ||
-        []
-      );
-    } catch (e) {
-      return [];
-    }
-  });
+  const [reservations, setReservations] = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [cancellingId, setCancellingId] = useState(null);
+  const [error, setError]               = useState("");
 
-  // Track the current real-world time to dynamically calculate cancellation windows
-  const [currentTime, setCurrentTime] = useState(Date.now());
-
-  // ── 1-Second Ticker Clock ─────────────────────────────
+  /* ── Fetch from API on mount ────────────────────────────── */
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 1000);
-
-    return () => clearInterval(timer);
+    API.get("/reservations/my-reservations")
+      .then((res) => setReservations(res.data.reservations || []))
+      .catch(() => setError("Failed to load reservations. Please try again."))
+      .finally(() => setLoading(false));
   }, []);
 
-  // Filter down to table reservations or dine-out orders
-  const filteredReservations = reservations.filter(
-    (item) => item && (item.type === "RESERVATION" || item.type === "DINE-OUT" || !item.type)
-  );
-
-  // ── Parse Reservation Date/Time into Timestamp ────────
-  const getReservationTimestamp = (resDate, resTime) => {
-    if (!resDate) return 0;
-    
+  /* ── Cancel via API ─────────────────────────────────────── */
+  const handleCancel = async (id) => {
+    if (!window.confirm("Are you sure you want to cancel this reservation?")) return;
+    setCancellingId(id);
     try {
-      // Ensure the time component defaults gracefully if missing
-      const timeString = resTime || "00:00";
-      
-      // Combines "YYYY-MM-DD" and "HH:MM" strings into a valid parsable ISO format
-      const reservationDateTime = new Date(`${resDate}T${timeString}`);
-      return reservationDateTime.getTime() || 0;
-    } catch (e) {
-      console.error("Failed to parse reservation date/time format", e);
-      return 0;
+      await API.patch(`/reservations/cancel/${id}`);
+      setReservations((prev) =>
+        prev.map((r) => (r._id === id ? { ...r, status: "cancelled" } : r))
+      );
+    } catch {
+      alert("Could not cancel reservation. Please try again.");
+    } finally {
+      setCancellingId(null);
     }
   };
 
-  // Cancellation handler
-  const handleCancelReservation = (id, index) => {
-    if (!window.confirm("Are you sure you want to cancel this reservation?")) return;
-
-    // 1. Determine which key is actually holding the data in localStorage
-    const storageKey = localStorage.getItem("reservations") ? "reservations" : "orders";
-    
-    // 2. Map through current state and update the status of the item that matches
-    const updatedReservations = reservations.map((item, idx) => {
-      // Fallback matching using index if an absolute item.id doesn't exist
-      if ((item.id && item.id === id) || (!item.id && idx === index)) {
-        return { ...item, status: "Cancelled" };
-      }
-      return item;
-    });
-
-    // 3. Update localStorage and component state
-    localStorage.setItem(storageKey, JSON.stringify(updatedReservations));
-    setReservations(updatedReservations);
+  /* ── Derive display status ──────────────────────────────── */
+  const getDisplayStatus = (reservation) => {
+    if (reservation.status === "cancelled") return "Cancelled";
+    const isPast = new Date(reservation.reservationDate) < new Date();
+    return isPast ? "Completed" : reservation.status === "confirmed" ? "Confirmed" : "Pending";
   };
 
-  function formatDateFull(d) {
-    if (!d) return "";
-    // Safe check if date format isn't YYYY-MM-DD
-    if (!d.includes("-")) return d; 
-    const [y, m, day] = d.split("-");
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    return `${day} ${months[+m - 1]}, ${y}`;
-  }
+  const statusStyles = {
+    Cancelled:  "bg-red-500/10 text-red-400 border-red-500/20",
+    Completed:  "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    Confirmed:  "bg-green-500/10 text-green-400 border-green-500/20",
+    Pending:    "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+  };
 
+  /* ── Render ─────────────────────────────────────────────── */
   return (
     <div className="min-h-screen pt-24 px-6 max-w-5xl mx-auto bg-black text-white">
-      <h1 className="text-3xl font-bold mb-6">
-        Table Reservations
-      </h1>
+      <h1 className="text-3xl font-bold mb-6">Table Reservations</h1>
 
-      {filteredReservations.length === 0 ? (
-        <p className="text-gray-400">No reservations found.</p>
-      ) : (
+      {/* Loading */}
+      {loading && (
+        <div className="flex justify-center items-center py-24">
+          <div style={{
+            width: 36, height: 36,
+            border: "2px solid rgba(249,115,22,0.3)",
+            borderTopColor: "#f97316",
+            borderRadius: "50%",
+            animation: "spin 0.8s linear infinite",
+          }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        </div>
+      )}
+
+      {/* Error */}
+      {!loading && error && (
+        <p className="text-red-400">{error}</p>
+      )}
+
+      {/* Empty */}
+      {!loading && !error && reservations.length === 0 && (
+        <p className="text-gray-400">No reservations found. Book a table from the Dine Out section!</p>
+      )}
+
+      {/* List */}
+      {!loading && !error && reservations.length > 0 && (
         <div className="space-y-4">
-          {filteredReservations.map((res, index) => {
-            // 1. Compute dynamic expiration metrics
-            const reservationTimeMs = getReservationTimestamp(res.date, res.time);
-            const isPastReservation = currentTime >= reservationTimeMs;
-            
-            // 2. Control cancellation permissions
-            const isCancellable = res.status !== "Cancelled" && !isPastReservation;
+          {reservations.map((res) => {
+            const displayStatus  = getDisplayStatus(res);
+            const isCancellable  = displayStatus !== "Cancelled" && displayStatus !== "Completed";
+            const restaurantName = res.restaurant?.name || "Unknown Restaurant";
 
-            // 3. Evaluate display status context layout
-            let currentStatus = res.status || "Confirmed";
-            if (currentStatus !== "Cancelled" && isPastReservation) {
-              currentStatus = "Completed"; // Gracefully tags old bookings as completed
-            }
-            
             return (
               <div
-                key={res.id || index}
+                key={res._id}
                 className="bg-[#1A1A1A] p-6 rounded-xl border border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:border-orange-500/30 transition-all duration-300"
               >
-                <div>
-                  {/* RESTAURANT NAME */}
-                  <h2 className="text-white font-bold text-xl mb-3">
-                    {res.restaurantName || "Unknown Restaurant"}
-                  </h2> 
-
-                  {/* DETAILS SECTION */}
-                  <div className="space-y-2 text-sm text-gray-300">
-                    <p className="flex items-center gap-2">
-                      <span className="text-white/40 font-medium">👥 Guests:</span> 
-                      <span className="text-white">{res.guests || "-"}</span>
-                    </p>
-
-                    <p className="flex items-center gap-2">
-                      <span className="text-white/40 font-medium">📅 Date:</span> 
-                      <span className="text-white">{formatDateFull(res.date) || "-"}</span>
-                    </p>
-
-                    <p className="flex items-center gap-2">
-                      <span className="text-white/40 font-medium">🕐 Time:</span> 
-                      <span className="text-white">{res.time || "-"}</span>
-                    </p>
-                    
-                    {res.customerName && (
+                {/* LEFT — details */}
+                <div className="flex gap-4 items-start">
+                  {res.restaurant?.image && (
+                    <img
+                      src={res.restaurant.image}
+                      alt={restaurantName}
+                      className="w-16 h-16 rounded-lg object-cover flex-shrink-0 hidden sm:block"
+                    />
+                  )}
+                  <div>
+                    <h2 className="text-white font-bold text-xl mb-3">{restaurantName}</h2>
+                    <div className="space-y-1 text-sm text-gray-300">
                       <p className="flex items-center gap-2">
-                        <span className="text-white/40 font-medium">👤 Name:</span> 
-                        <span className="text-white">{res.customerName}</span>
+                        <span className="text-white/40">👥 Guests:</span>
+                        <span className="text-white">{res.guests}</span>
                       </p>
-                    )}
+                      <p className="flex items-center gap-2">
+                        <span className="text-white/40">📅 Date:</span>
+                        <span className="text-white">{formatDateFull(res.reservationDate)}</span>
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <span className="text-white/40">🕐 Time:</span>
+                        <span className="text-white">{formatTime(res.reservationDate)}</span>
+                      </p>
+                      {res.customerName && (
+                        <p className="flex items-center gap-2">
+                          <span className="text-white/40">👤 Name:</span>
+                          <span className="text-white">{res.customerName}</span>
+                        </p>
+                      )}
+                      {res.phone && (
+                        <p className="flex items-center gap-2">
+                          <span className="text-white/40">📞 Phone:</span>
+                          <span className="text-white">{res.phone}</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* ACTIONS SECTION (STATUS BADGE & CANCEL BUTTON) */}
-                <div className="flex flex-row md:flex-col lg:flex-row items-center gap-4 self-end md:self-center">
-                  {/* DYNAMIC STATUS BADGE */}
-                  <span
-                    className={`px-4 py-2 rounded-full text-sm font-semibold border capitalize transition-colors duration-300 ${
-                      currentStatus === "Cancelled"
-                        ? "bg-red-500/10 text-red-400 border-red-500/20"
-                        : currentStatus === "Pending"
-                        ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                        : currentStatus === "Completed"
-                        ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                        : "bg-green-500/10 text-green-400 border-green-500/20"
-                    }`}
-                  >
-                    {currentStatus}
+                {/* RIGHT — status + cancel */}
+                <div className="flex flex-row md:flex-col lg:flex-row items-center gap-3 self-end md:self-center">
+                  <span className={`px-4 py-2 rounded-full text-sm font-semibold border capitalize ${statusStyles[displayStatus]}`}>
+                    {displayStatus}
                   </span>
-
-                  {/* CONDITIONAL CANCEL BUTTON */}
                   {isCancellable && (
                     <button
-                      onClick={() => handleCancelReservation(res.id, index)}
-                      className="bg-red-500 hover:bg-red-600 text-white font-medium text-sm px-4 py-2 rounded-lg transition-all duration-200"
+                      onClick={() => handleCancel(res._id)}
+                      disabled={cancellingId === res._id}
+                      className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-medium text-sm px-4 py-2 rounded-lg transition-all duration-200"
                     >
-                      Cancel Table
+                      {cancellingId === res._id ? "Cancelling..." : "Cancel Table"}
                     </button>
                   )}
                 </div>
