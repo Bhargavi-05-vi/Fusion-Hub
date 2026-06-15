@@ -65,19 +65,30 @@ const MyOrdersPage = () => {
   }, []);
 
   // ── Cancel order ──────────────────────────────────────
-  const cancelOrder = async (orderId) => {
-    if (!window.confirm('Cancel this order?')) return;
-    try {
-      await API.patch(`/orders/${orderId}/status`, { status: 'Cancelled' });
-      setOrders((prev) =>
-        prev.map((o) =>
-          o._id === orderId ? { ...o, status: 'Cancelled' } : o
-        )
-      );
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to cancel order.');
-    }
-  };
+ const cancelOrder = async (orderId) => {
+  if (!window.confirm("Cancel this order?")) return;
+
+  try {
+    await API.patch(`/orders/${orderId}/cancel`);
+
+    setOrders((prev) =>
+      prev.map((o) =>
+        o._id === orderId
+          ? { ...o, status: "CANCELLED" }
+          : o
+      )
+    );
+
+    alert("Order cancelled successfully");
+  } catch (err) {
+    console.error(err);
+
+    alert(
+      err.response?.data?.message ||
+      "Failed to cancel order."
+    );
+  }
+};
 
   // ── Helpers for Time Logic ────────────────────────────
   const getCancelUntilTime = (createdAt) => {
